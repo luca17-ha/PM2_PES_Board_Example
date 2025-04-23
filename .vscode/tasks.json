@@ -1,0 +1,46 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "shell",
+            "label": "Build Mbed OS application",
+            "command": "mbed",
+            "windows": {
+                "command": "mbed.exe"
+            },
+            "options": {
+                "cwd": "C:\\Users\\lucar\\Documents\\pipeline_robot\\PM2_PES_Board_Example"
+            },
+            "group": "build",
+            "problemMatcher": {
+                "owner": "cpp",
+                "pattern": {
+                    "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "severity": 4,
+                    "message": 5
+                },
+                "fileLocation": [
+                    "relative",
+                    "C:\\Users\\lucar\\Documents\\pipeline_robot\\PM2_PES_Board_Example"
+                ]
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "args": [
+                "compile",
+                "-m",
+                "NUCLEO_F446RE",
+                "--profile=develop"
+            ]
+        }
+    ]
+}

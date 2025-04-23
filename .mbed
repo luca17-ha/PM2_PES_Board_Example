@@ -1,3 +1,5 @@
 ROOT=.
 TARGET=NUCLEO_F446RE
 TARGET_CODE=0777
+TOOLCHAIN=GCC_ARM
+GCC_ARM_PATH=C:\Program Files (x86)\Arm GNU Toolchain arm-none-eabi\13.3 rel1\bin

@@ -135,19 +135,14 @@ int main()
                 break; 
             }
             case RobotState::PID_CHARACTERIZATION: {
-                static bool has_started = false;
-                if (!has_started) {
-                    printf("Starting valve characterization...\n");
-                    valve.start(0.0f);
-                    has_started = true;
-                }
-                
+                printf("Starting valve characterization...\n");
+                valve.start(0.0f);                                  //important to start characteriztaion timer
                 valve.quickCharacterize(odometer, sd_logger);
-
                 if (!valve.isRunning()) {
                     printf("Tuning complete!\n");
-                    has_started = false;
                     robot_state = SLEEP;
+                } else {
+                    valve.quickCharacterize(odometer, sd_logger);
                 }
                 break; 
             }
