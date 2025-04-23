@@ -160,6 +160,12 @@ int main()
     // const float velocity_max_M3 = kn_M3 / 60.0f * voltage_max; // maximum velocity in rotations per second
     // motor_M3.setMaxVelocity(velocity_max_M3 * 0.5f);           // set maximum velocity to 50% of maximum velocity
 
+    // // adjust fast pwm frequency
+    // int period_mus = 1000;
+    // motor_M1.setFastPWMPeriod_mus(period_mus);
+    // motor_M2.setFastPWMPeriod_mus(period_mus);
+    // motor_M3.setFastPWMPeriod_mus(period_mus);
+
     const float motor_setpoint_M1 = 300.0f / gear_ratio_M1;
     const float motor_setpoint_M2 = 300.0f / gear_ratio_M2;
     const float motor_setpoint_M3 = 300.0f / gear_ratio_M3;

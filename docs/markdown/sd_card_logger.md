@@ -15,9 +15,10 @@ The `SDLogger` class:
 
 ## Hardware and Pin Configuration
 
-To use the `SDLogger`, you need an **SD card**. A successfully tested card is:
+To use the `SDLogger`, you need an **SD card**. Successfully tested sd cards are:
 
-- Transcend 16 GB micro SD HC1
+- Transcend 16 GB Micro SD HC1
+- ScanDisk Ultra 16 GB Micro SD HC1 A1
 
 The SD card module itself is alread on the PES board. The pin names are defined in `PESBoardPinMap.h`:
 

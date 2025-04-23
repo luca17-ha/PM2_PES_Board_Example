@@ -257,6 +257,13 @@ public:
      */
     void setMotionPlanerPosition(float position = 0.0f);
 
+    /**
+     * @brief Set the PWM period in microseconds.
+     *
+     * @param period_mus The Period in microseconds. Make sure period_mus <= PERIOD_MUS (see below).
+     */
+    void setFastPWMPeriod_mus(int period_mus);
+
 #if PERFORM_GPA_MEAS
     void startGPA();
 #endif
@@ -266,7 +273,7 @@ public:
 #endif
 
 private:
-    static constexpr int64_t PERIOD_MUS = 500;
+    static constexpr int64_t PERIOD_MUS = 1000;
     static constexpr float TS = 1.0e-6f * static_cast<float>(PERIOD_MUS);
     static constexpr float PWM_MIN = 0.01f;
     static constexpr float PWM_MAX = 0.99f;

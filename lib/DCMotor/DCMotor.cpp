@@ -224,6 +224,12 @@ void DCMotor::setMotionPlanerPosition(float position) {
     m_Motion.setPosition(position);
 }
 
+void DCMotor::setFastPWMPeriod_mus(int period_mus)
+{
+    // set the period of the PWM signal in microseconds
+    m_FastPWM.period_mus(period_mus);
+}
+
 #if PERFORM_GPA_MEAS
 void DCMotor::startGPA()
 {
