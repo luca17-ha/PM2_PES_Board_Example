@@ -9,7 +9,7 @@
                 "command": "mbed.exe"
             },
             "options": {
-                "cwd": "C:\\Users\\lucar\\Documents\\pipeline_robot\\PM4_Pipeline_Robot"
+                "cwd": "C:\\Users\\lucar\\Documents\\VSC\\PM4_Pipeline_Robot"
             },
             "group": "build",
             "problemMatcher": {
@@ -24,7 +24,7 @@
                 },
                 "fileLocation": [
                     "relative",
-                    "C:\\Users\\lucar\\Documents\\pipeline_robot\\PM4_Pipeline_Robot"
+                    "C:\\Users\\lucar\\Documents\\VSC\\PM4_Pipeline_Robot"
                 ]
             },
             "presentation": {
