@@ -9,7 +9,7 @@
                 "command": "mbed.exe"
             },
             "options": {
-                "cwd": "C:\\Users\\lucar\\Documents\\pipeline_robot\\PM2_PES_Board_Example"
+                "cwd": "C:\\Users\\lucar\\Documents\\pipeline_robot\\PM4_Pipeline_Robot"
             },
             "group": "build",
             "problemMatcher": {
@@ -24,7 +24,7 @@
                 },
                 "fileLocation": [
                     "relative",
-                    "C:\\Users\\lucar\\Documents\\pipeline_robot\\PM2_PES_Board_Example"
+                    "C:\\Users\\lucar\\Documents\\pipeline_robot\\PM4_Pipeline_Robot"
                 ]
             },
             "presentation": {

@@ -9,6 +9,7 @@
 #include "Valve.h"
 #include "Chirp.h"
 #include "SDLogger.h"
+#include "UltrasonicSensor.h"
 
 bool do_execute_main_task = false; // this variable will be toggled via the user button (blue button) and
                                    // decides whether to execute the main task or not
@@ -27,6 +28,10 @@ int main()
     //variables
     int sleep = 0;
 
+    // ultra sonic sensor
+    UltrasonicSensor us_sensor(PB_D3);
+    float us_distance_cm = 0.0f;
+    
 
     // attach button fall function address to user button object
     user_button.fall(&toggle_do_execute_main_fcn);
@@ -98,13 +103,15 @@ int main()
     enum RobotState {
         INITIAL,
         PID_CHARACTERIZATION,
+        INIT_EXECUTION,
         EXECUTION,
         SLEEP,
         EMERGENCY
     } robot_state = RobotState::INITIAL;
 
-
-
+    //Timer which is used for logging during EXECUTION
+    Timer logging_timer;
+    long long time_previous_us = 0; // used for data logging during execution
 
     // while loop gets executed every main_task_period_ms milliseconds, this is a
     // simple approach to repeatedly execute main
@@ -120,6 +127,7 @@ int main()
     while (true) {
         main_task_timer.reset();
 
+
         if (do_execute_main_task) {
             
 
@@ -131,7 +139,7 @@ int main()
                 // visual feedback that the main task is executed, setting this once would actually be enough
                 user_led = 1;
                 enable_motors = 1;
-                robot_state = PID_CHARACTERIZATION; //jump to characterization or execution
+                robot_state = INIT_EXECUTION; //jump to characterization or execution
                 break; 
             }
             case RobotState::PID_CHARACTERIZATION: {
@@ -151,6 +159,13 @@ int main()
                 }
                 break; 
             }
+            case RobotState::INIT_EXECUTION: {
+                logging_timer.reset();
+                logging_timer.start();
+                time_previous_us = 0;
+                robot_state = EXECUTION;
+                break;
+            }
             case RobotState::EXECUTION: {
                 //this could be only set once if speed target doesnt change
                 valve.startClosedLoop(2.0f);
@@ -159,18 +174,33 @@ int main()
                 odometer.update();
                 
                 //printf("Count: %d32 | ", odometer.getCount());
-                printf("Distance: %.2f m | ", odometer.getDistanceM());
-                printf("Speed: %.2f m/s | ", odometer.getSpeedMPS());
+                //printf("Distance: %.2f m | ", odometer.getDistanceM());
+                //printf("Speed: %.2f m/s | ", odometer.getSpeedMPS());
                 //printf("%.1f RPM\n", odometer.getSpeedRPM());
  
                 valve.update(odometer.getSpeedMPS());
-
+                /*
                 printf("Speed: %.2f | Valve: %.1f%%\n", 
                     odometer.getSpeedMPS(), 
                     valve.getPosition()*100); 
+                */
+
+                    const long long time_us = logging_timer.elapsed_time().count();
+                    const long long dtime_us = time_us - time_previous_us;
+                    time_previous_us = time_us;
+
+                    printf("Timer started: %lld\n", time_us);
+                    printf("time_us: %lld | delta: %lld us\n", time_us, dtime_us);
+
+                    sd_logger.write(dtime_us);
+                    sd_logger.write(odometer.getSpeedMPS());
+                    sd_logger.write(us_sensor.read());
+                    sd_logger.write(odometer.getDistanceM());
+                    sd_logger.send();
                 break; 
             }
             case RobotState::EMERGENCY: {
+                printf("us_sensor_cm: %f\n", us_sensor.read());
                 break; 
             }     
             case RobotState::SLEEP: {
@@ -193,6 +223,8 @@ int main()
             // the following code block gets executed only once
             if (do_reset_all_once) {
                 valve.setOpen(0.0f);
+                enable_motors = 0;                      //geht das (valve braucht motor)
+                robot_state = INIT_EXECUTION;
                 do_reset_all_once = false;
 
                 // reset variables and objects
@@ -205,8 +237,10 @@ int main()
 
         // read timer and make the main thread sleep for the remaining time span (non blocking)
         int main_task_elapsed_time_ms = duration_cast<milliseconds>(main_task_timer.elapsed_time()).count();
-        if (main_task_period_ms - main_task_elapsed_time_ms < 0)
+        if (main_task_period_ms - main_task_elapsed_time_ms < 0) {
             printf("Warning: Main task took longer than main_task_period_ms\n");
+            printf("main_task_period_ms: %d\n", main_task_period_ms);
+        }
         else
             thread_sleep_for(main_task_period_ms - main_task_elapsed_time_ms);
     }
