@@ -63,8 +63,9 @@ void Valve::update(float measured_speed) {
             float error = target_speed_ - measured_speed;
             printf("error: %.3f\n", error);
             float valve_cmd = 1.0f - controller_.update(error);
-            printf("valve cmd: %.3\n", valve_cmd);
+            printf("valve cmd: %.3f\n", valve_cmd);
             motor_.setRotation(constrain(valve_cmd, 0.0f, 1.0f));
+            //motor_.setRotation(100.0);
             break;
         }
 

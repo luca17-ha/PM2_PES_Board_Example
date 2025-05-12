@@ -25,6 +25,8 @@
 
     #define PB_ENABLE_DCMOTORS PB_15
 
+    #define PB_buzzer PA_7
+
     // IMU
     #define PB_IMU_SDA PC_9
     #define PB_IMU_SCL PA_8
@@ -34,6 +36,7 @@
     #define PB_SD_MISO PC_11
     #define PB_SD_SCK PC_10
     #define PB_SD_CS PD_2
+
 
 #else
 

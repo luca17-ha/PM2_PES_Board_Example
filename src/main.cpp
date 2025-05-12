@@ -10,6 +10,7 @@
 #include "Chirp.h"
 #include "SDLogger.h"
 #include "UltrasonicSensor.h"
+#include "FastPWM.h"
 
 bool do_execute_main_task = false; // this variable will be toggled via the user button (blue button) and
                                    // decides whether to execute the main task or not
@@ -17,10 +18,11 @@ bool do_reset_all_once = false;    // this variable is used to reset certain var
                                    // shows how you can run a code segment only once
 
 // objects for user button (blue button) handling on nucleo board
-DebounceIn user_button(BUTTON1);   // create DebounceIn to evaluate the user button
+DebounceIn user_button(PC_5, PullUp);   // create DebounceIn to evaluate the user button //Button1 für user button
 void toggle_do_execute_main_fcn(); // custom function which is getting executed when user
                                    // button gets pressed, definition below
                                    
+
 
 // main runs as an own thread
 int main()
@@ -31,13 +33,21 @@ int main()
     // ultra sonic sensor
     UltrasonicSensor us_sensor(PB_D3);
     float us_distance_cm = 0.0f;
+
+
+    //buzzer
+    DigitalOut buzzer(PB_D2);
+
+
     
+
 
     // attach button fall function address to user button object
     user_button.fall(&toggle_do_execute_main_fcn);
 
+
     //Define Encoder Counter for linear measurement
-    const float wheel_diameter_mm = 1000;
+    const float wheel_diameter_mm = 4.0;
 
     EncoderCounter odometer_encoder(PB_ENC_A_M2, PB_ENC_B_M2);
     Odometer odometer(odometer_encoder, wheel_diameter_mm);
@@ -53,7 +63,7 @@ int main()
     enable_motors = 0; 
 
     //define Motor M1
-    const float gear_ratio_M1 = 250.0f; // gear ratio * constant for valve compensation current constant: 10
+    const float gear_ratio_M1 = 150.0f; // gear ratio * constant for valve compensation current constant: 10
     //valve compensation: rotation(1.0f) should completely close the Valve
     //valve compensation: rotation(0.0f) should completely open the Valve
     
@@ -61,12 +71,13 @@ int main()
     // it is assumed that only one motor is available, there fore
     // we use the pins from M1, so you can leave it connected to M1
     DCMotor motor_M1(PB_PWM_M1, PB_ENC_A_M1, PB_ENC_B_M1, gear_ratio_M1, kn_M1, voltage_max);
+    DCMotor motor_M3(PB_PWM_M3, PB_ENC_A_M3, PB_ENC_B_M3, gear_ratio_M1, kn_M1, voltage_max);
     // enable the motion planner for smooth movement
     //motor_M1.enableMotionPlanner();
     // limit max. velocity to half physical possible velocity
     motor_M1.setMaxVelocity(motor_M1.getMaxPhysicalVelocity() * 1.0f);
 
-
+    
 
 
     const int main_task_period_ms = 20; // define main task period time in ms e.g. 20 ms, there for
@@ -88,13 +99,14 @@ int main()
     SDLogger sd_logger(PB_SD_MOSI, PB_SD_MISO, PB_SD_SCK, PB_SD_CS);
 
     //valve => nozzle to regulate airflow
-    Valve valve(motor_M1, (float)main_task_period_ms / 1000);  // 20ms sampling time
+    Valve valve(motor_M3, (float)main_task_period_ms / 1000);  // 20ms sampling time
 
 
     //printf("Starting valve characterization...\n");
     //valve.quickCharacterize(odometer);  // Takes ~10 seconds
     //printf("Tuning complete!\n");
     
+
 
 
     // led on nucleo board
@@ -121,11 +133,14 @@ int main()
     // start timer
     main_task_timer.start();
 
+    
 
 
     // this loop will run forever
     while (true) {
         main_task_timer.reset();
+
+        buzzer = 1;
 
 
         if (do_execute_main_task) {
@@ -139,7 +154,7 @@ int main()
                 // visual feedback that the main task is executed, setting this once would actually be enough
                 user_led = 1;
                 enable_motors = 1;
-                robot_state = INIT_EXECUTION; //jump to characterization or execution
+                robot_state = INIT_EXECUTION; //jump to PID_CHARACTERIZATION or INIT_EXECUTION
                 break; 
             }
             case RobotState::PID_CHARACTERIZATION: {
@@ -163,18 +178,18 @@ int main()
                 logging_timer.reset();
                 logging_timer.start();
                 time_previous_us = 0;
+                valve.startClosedLoop(0.5f);
+                printf("init execution");
                 robot_state = EXECUTION;
                 break;
             }
             case RobotState::EXECUTION: {
                 //this could be only set once if speed target doesnt change
-                valve.startClosedLoop(2.0f);
-
                 //odometer update and output
                 odometer.update();
                 
                 //printf("Count: %d32 | ", odometer.getCount());
-                //printf("Distance: %.2f m | ", odometer.getDistanceM());
+                printf("Distance: %.2f m | \n", odometer.getDistanceM());
                 //printf("Speed: %.2f m/s | ", odometer.getSpeedMPS());
                 //printf("%.1f RPM\n", odometer.getSpeedRPM());
  
@@ -188,28 +203,35 @@ int main()
                     const long long time_us = logging_timer.elapsed_time().count();
                     const long long dtime_us = time_us - time_previous_us;
                     time_previous_us = time_us;
-
-                    printf("Timer started: %lld\n", time_us);
-                    printf("time_us: %lld | delta: %lld us\n", time_us, dtime_us);
-
                     sd_logger.write(dtime_us);
                     sd_logger.write(odometer.getSpeedMPS());
                     sd_logger.write(us_sensor.read());
                     sd_logger.write(odometer.getDistanceM());
+                    sd_logger.write(valve.getPosition());
                     sd_logger.send();
                 break; 
             }
             case RobotState::EMERGENCY: {
                 printf("us_sensor_cm: %f\n", us_sensor.read());
+                const long long time_us = logging_timer.elapsed_time().count();
+                const long long dtime_us = time_us - time_previous_us;
+                time_previous_us = time_us;
+                sd_logger.write(dtime_us);
+                sd_logger.write(odometer.getSpeedMPS());
+                sd_logger.write(us_sensor.read());
+                sd_logger.write(odometer.getDistanceM());
+                sd_logger.write(valve.getPosition());
+                sd_logger.send();
                 break; 
             }     
             case RobotState::SLEEP: {
                 
                 if (sleep == 0) {
-                    valve.setOpen(0.0f);
+                    //valve.setOpen(0.0f);
+                    motor_M3.setRotation(0.1f);
                     printf("going to sleep\n");
                     sleep = 1;
-                }
+                }               
 
                 break; 
             }
@@ -223,8 +245,7 @@ int main()
             // the following code block gets executed only once
             if (do_reset_all_once) {
                 valve.setOpen(0.0f);
-                enable_motors = 0;                      //geht das (valve braucht motor)
-                robot_state = INIT_EXECUTION;
+                robot_state = INITIAL;
                 do_reset_all_once = false;
 
                 // reset variables and objects
@@ -243,6 +264,11 @@ int main()
         }
         else
             thread_sleep_for(main_task_period_ms - main_task_elapsed_time_ms);
+
+    printf("Speed: %.2f | Valve: %.1f%%\n", 
+        odometer.getSpeedMPS(), 
+        valve.getPosition()*100); 
+        
     }
 }
 
